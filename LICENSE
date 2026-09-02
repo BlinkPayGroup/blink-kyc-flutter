@@ -1,0 +1,29 @@
+Blink KYC Flutter SDK — Proprietary License
+
+Copyright (c) 2026 Blink. All rights reserved.
+
+This software and its source code (the "Software") are proprietary and
+confidential to Blink. The Software is licensed, not sold, and is made available
+only to customers under a separate written agreement with Blink.
+
+Subject to that agreement, you are granted a non-exclusive, non-transferable,
+revocable license to install and use the Software to integrate Blink identity
+verification into your own applications. No other rights are granted.
+
+You may not, except to the extent expressly permitted by your agreement or by
+applicable law:
+  * copy, modify, or create derivative works of the Software;
+  * distribute, sublicense, sell, rent, lease, or otherwise transfer the
+    Software to any third party;
+  * reverse engineer, decompile, or disassemble the Software, or attempt to
+    derive the methods, models, thresholds, or scoring by which verification is
+    performed;
+  * remove or alter any proprietary notices.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL BLINK BE LIABLE
+FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY ARISING FROM OR IN CONNECTION WITH THE
+SOFTWARE OR ITS USE.
+
+For licensing enquiries, contact your Blink representative.
