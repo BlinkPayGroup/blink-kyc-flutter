@@ -34,12 +34,18 @@ class BlinkTheme {
 class BlinkStrings {
   const BlinkStrings({
     this.documentTitle = 'Scan your document',
-    this.documentHint = 'Fit the document inside the frame, then capture.',
+    this.documentHint = 'Point the camera at your ID and hold steady.',
+    this.documentHintFar = 'Move closer so the document fills the frame.',
+    this.documentHintHold = 'Hold steady…',
+    this.documentHintManual = 'Fit the document inside the frame, then capture.',
     this.captureButton = 'Capture',
+    this.autoCaptureOn = 'Auto-capture: on',
+    this.autoCaptureOff = 'Auto-capture: off',
     this.retake = 'Retake',
     this.use = 'Use photo',
     this.livenessTitle = 'Liveness check',
-    this.livenessHint = 'Follow the prompts. Keep your face inside the circle.',
+    this.livenessHint = 'Fit your face inside the oval.',
+    this.livenessHintFit = 'Great — hold still, this starts automatically.',
     this.startButton = 'Start',
     this.granting = 'Requesting camera…',
     this.working = 'Working…',
@@ -49,11 +55,17 @@ class BlinkStrings {
 
   final String documentTitle;
   final String documentHint;
+  final String documentHintFar;
+  final String documentHintHold;
+  final String documentHintManual;
   final String captureButton;
+  final String autoCaptureOn;
+  final String autoCaptureOff;
   final String retake;
   final String use;
   final String livenessTitle;
   final String livenessHint;
+  final String livenessHintFit;
   final String startButton;
   final String granting;
   final String working;

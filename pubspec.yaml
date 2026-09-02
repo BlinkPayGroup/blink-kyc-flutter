@@ -2,7 +2,7 @@ name: blink_kyc
 description: >-
   Drop-in identity verification for Flutter. Your backend mints a session; the
   SDK runs the document and liveness capture and returns a verdict.
-version: 1.1.0
+version: 1.2.0
 homepage: https://blink-pay.net/kyc/
 repository: https://github.com/BlinkPayGroup/blink-kyc-flutter
 # Proprietary — do not publish to pub.dev. Remove `publish_to` only to push to a
