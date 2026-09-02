@@ -1,6 +1,9 @@
 /// The liveness challenge screen: a front-camera preview inside a circular guide
-/// that shows each requested action in turn and records a frame per action.
-/// Nothing here reveals how verification works.
+/// that shows each requested action in turn and records the frames a live
+/// capture must supply. The first frame is a settled, front-facing still (grabbed
+/// before any gesture prompt) so the verifier has a clean frontal face; the rest
+/// are a short burst per requested action, which supplies the movement a live
+/// capture shows. Nothing here reveals how verification works.
 library;
 
 import 'dart:typed_data';
@@ -15,8 +18,21 @@ import 'flow_controller.dart';
 /// Max frames the server accepts for one liveness submission.
 const int _maxFrames = 12;
 
-/// Delay before grabbing a frame, to let the user perform the action.
-const Duration _perActionDelay = Duration(milliseconds: 1100);
+/// Minimum frames a live capture must contain.
+const int _minFrames = 3;
+
+/// Settle time before grabbing the primary frontal still, so it is not a
+/// mid-motion blur.
+const Duration _settleDelay = Duration(milliseconds: 900);
+
+/// Delay before the first grab of an action, to let the user perform it.
+const Duration _perActionDelay = Duration(milliseconds: 1400);
+
+/// Gap before the second grab of an action, so the pair carries motion.
+const Duration _burstGap = Duration(milliseconds: 400);
+
+/// Gap between grabs in the fallback burst for a degenerate challenge.
+const Duration _fallbackGap = Duration(milliseconds: 450);
 
 /// Shown while [BlinkFlowController.stage] is [BlinkStage.liveness].
 class LivenessCaptureScreen extends StatefulWidget {
@@ -81,20 +97,49 @@ class _LivenessCaptureScreenState extends State<LivenessCaptureScreen> {
     if (camera == null || _running) return;
     setState(() => _running = true);
 
-    final actions = widget.controller.actions.take(_maxFrames).toList();
     final frames = <Uint8List>[];
     try {
+      // 1) Primary frontal frame — a settled still grabbed before any gesture
+      //    prompt, so the verifier scores a sharp frontal face, never a blur.
+      if (!mounted) return;
+      setState(() => _prompt = 'Look straight ahead');
+      await Future<void>.delayed(_settleDelay);
+      if (!mounted) return;
+      frames.add(await _grab(camera));
+
+      // 2) A short two-frame burst per requested action supplies the inter-frame
+      //    motion a live capture must show.
+      final actions = widget.controller.actions.isNotEmpty
+          ? widget.controller.actions.toList()
+          : const ['MOVE_CLOSER', 'TURN_HEAD_RIGHT'];
+      final perAction = ((_maxFrames - 1 - frames.length) ~/ actions.length)
+          .clamp(1, 2);
       for (final action in actions) {
+        if (frames.length >= _maxFrames) break;
         if (!mounted) return;
         setState(() => _prompt = _humanAction(action));
         await Future<void>.delayed(_perActionDelay);
         if (!mounted) return;
-        final file = await camera.takePicture();
-        frames.add(await file.readAsBytes());
+        frames.add(await _grab(camera));
+        if (perAction > 1 && frames.length < _maxFrames) {
+          await Future<void>.delayed(_burstGap);
+          if (!mounted) return;
+          frames.add(await _grab(camera));
+        }
       }
+
+      // 3) Guarantee enough frames with motion even for a degenerate challenge.
+      while (frames.length < _minFrames) {
+        if (!mounted) return;
+        setState(() => _prompt = 'Move a little closer');
+        await Future<void>.delayed(_fallbackGap);
+        if (!mounted) return;
+        frames.add(await _grab(camera));
+      }
+
       if (!mounted) return;
       setState(() => _prompt = '✓');
-      widget.controller.provideLiveness(frames);
+      widget.controller.provideLiveness(frames.take(_maxFrames).toList());
     } catch (error, stackTrace) {
       widget.controller.failCapture(
         BlinkError(BlinkErrorCode.cameraDenied, widget.strings.cameraDenied, 0),
@@ -272,7 +317,14 @@ String _humanAction(String action) {
     'TURN_HEAD_RIGHT': 'Turn your head right',
     'LOOK_STRAIGHT': 'Look straight ahead',
     'SMILE': 'Smile',
+    'MOVE_CLOSER': 'Move a little closer',
     'NOD': 'Nod',
   };
   return map[action] ?? action.replaceAll('_', ' ').toLowerCase();
+}
+
+/// Grab a single frame from the live preview as JPEG bytes.
+Future<Uint8List> _grab(CameraController camera) async {
+  final file = await camera.takePicture();
+  return file.readAsBytes();
 }
