@@ -15,7 +15,7 @@ dependencies:
   blink_kyc:
     git:
       url: https://github.com/BlinkPayGroup/blink-kyc-flutter.git
-      ref: "1.0.0"
+      ref: "1.3.0"
 ```
 
 Then `flutter pub get`.

@@ -248,7 +248,7 @@ class _DocumentCaptureScreenState extends State<DocumentCaptureScreen> {
           Text(
             _hint,
             textAlign: TextAlign.center,
-            style: TextStyle(color: theme.text.withOpacity(0.75)),
+            style: TextStyle(color: theme.text.withValues(alpha: 0.75)),
           ),
           const SizedBox(height: 16),
           AspectRatio(
@@ -291,7 +291,7 @@ class _DocumentCaptureScreenState extends State<DocumentCaptureScreen> {
               child: Text(
                 _auto ? strings.autoCaptureOn : strings.autoCaptureOff,
                 style: TextStyle(
-                  color: theme.text.withOpacity(0.85),
+                  color: theme.text.withValues(alpha: 0.85),
                   fontSize: 13,
                 ),
               ),
@@ -447,7 +447,7 @@ class _GhostButton extends StatelessWidget {
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
           foregroundColor: theme.text,
-          side: BorderSide(color: theme.text.withOpacity(0.2)),
+          side: BorderSide(color: theme.text.withValues(alpha: 0.2)),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),

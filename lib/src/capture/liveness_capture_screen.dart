@@ -8,6 +8,7 @@
 /// framing aid only; nothing here reveals how verification works.
 library;
 
+import 'dart:io' show Platform;
 import 'dart:typed_data';
 
 import 'package:camera/camera.dart';
@@ -15,7 +16,7 @@ import 'package:flutter/material.dart';
 
 import '../protocol.dart';
 import '../theme.dart';
-import 'capture_heuristics.dart';
+import 'face_detector.dart';
 import 'flow_controller.dart';
 
 /// Max frames the server accepts for one liveness submission.
@@ -63,9 +64,11 @@ class LivenessCaptureScreen extends StatefulWidget {
 
 class _LivenessCaptureScreenState extends State<LivenessCaptureScreen> {
   CameraController? _camera;
+  BlinkFaceDetector? _detector;
   bool _initialised = false;
   bool _running = false;
   bool _streaming = false;
+  bool _analyzing = false;
   String? _prompt;
 
   bool _matched = false;
@@ -81,11 +84,13 @@ class _LivenessCaptureScreenState extends State<LivenessCaptureScreen> {
 
   Future<void> _open() async {
     final description = _pickCamera(widget.cameras, CameraLensDirection.front);
+    // ML Kit wants NV21 (single plane) on Android and BGRA8888 on iOS.
     final camera = CameraController(
       description,
       ResolutionPreset.medium,
       enableAudio: false,
-      imageFormatGroup: ImageFormatGroup.yuv420,
+      imageFormatGroup:
+          Platform.isAndroid ? ImageFormatGroup.nv21 : ImageFormatGroup.bgra8888,
     );
     try {
       await camera.initialize();
@@ -100,6 +105,10 @@ class _LivenessCaptureScreenState extends State<LivenessCaptureScreen> {
       await camera.dispose();
       return;
     }
+    _detector = BlinkFaceDetector(
+      lensDirection: description.lensDirection,
+      sensorOrientation: description.sensorOrientation,
+    );
     setState(() {
       _camera = camera;
       _initialised = true;
@@ -130,12 +139,24 @@ class _LivenessCaptureScreenState extends State<LivenessCaptureScreen> {
   }
 
   void _onFrame(CameraImage image) {
-    if (!mounted || _running) return;
+    if (!mounted || _running || _analyzing) return;
     final now = DateTime.now().millisecondsSinceEpoch;
     if (now - _lastAnalyzedAt < _analyzeIntervalMs) return;
     _lastAnalyzedAt = now;
 
-    final signal = analyzeFace(image);
+    final detector = _detector;
+    if (detector == null) return;
+    _analyzing = true;
+    detector.analyze(image).then((signal) {
+      _analyzing = false;
+      if (!mounted || _running) return;
+      _applyFaceSignal(signal, DateTime.now().millisecondsSinceEpoch);
+    }).catchError((Object _) {
+      _analyzing = false;
+    });
+  }
+
+  void _applyFaceSignal(FaceSignal signal, int now) {
     if (signal.fit) {
       if (_fitSince == 0) _fitSince = now;
       final held = now - _fitSince;
@@ -233,6 +254,7 @@ class _LivenessCaptureScreenState extends State<LivenessCaptureScreen> {
       camera.stopImageStream().catchError((_) {});
     }
     camera?.dispose();
+    _detector?.close();
     super.dispose();
   }
 
@@ -260,7 +282,7 @@ class _LivenessCaptureScreenState extends State<LivenessCaptureScreen> {
                 ? strings.livenessHint
                 : (_matched ? strings.livenessHintFit : strings.livenessHint),
             textAlign: TextAlign.center,
-            style: TextStyle(color: theme.text.withOpacity(0.75)),
+            style: TextStyle(color: theme.text.withValues(alpha: 0.75)),
           ),
           const SizedBox(height: 16),
           AspectRatio(
@@ -355,7 +377,7 @@ class _PromptPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.6),
+        color: Colors.black.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(

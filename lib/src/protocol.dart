@@ -167,7 +167,7 @@ class Verdict {
   factory Verdict.fromJson(Map<String, dynamic> json) {
     final result = VerdictResult.maybeFromWire(json['result'] as String?);
     if (result == null) {
-      throw BlinkError(
+      throw const BlinkError(
           BlinkErrorCode.malformedResponse, 'Missing verdict result', 0);
     }
     return Verdict(result: result, detail: (json['detail'] as String?) ?? '');

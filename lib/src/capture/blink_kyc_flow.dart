@@ -272,7 +272,7 @@ class _Busy extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        Text(label, style: TextStyle(color: theme.text.withOpacity(0.8))),
+        Text(label, style: TextStyle(color: theme.text.withValues(alpha: 0.8))),
       ],
     );
   }
